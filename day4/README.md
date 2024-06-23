@@ -106,3 +106,29 @@ vault write auth/approle/role/terraform \
 # Role ID Creation
 vault read auth/approle/role/terraform/role-id
 vault write -f auth/approle/role/terraform/secret-id
+
+
+## Scenario-1
+
+# Importing Configuration
+
+```bash
+import {
+  id="i-xxxx"
+  to= aws_instance.example
+}
+```
+
+# Everything related to the imported resource.
+
+terraform plan -generate-config-out=generated_resources.tf
+
+# Add to State File
+terraform import aws_instance.example i-xxxx
+
+## Scneario-2
+
+# Drift Detection
+terraform refresh
+
+Audit Logs-> automation for figuring out manual changes in the resources
