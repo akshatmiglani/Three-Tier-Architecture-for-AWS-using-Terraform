@@ -27,9 +27,9 @@ output "lb_sg"{
 output "public_sub"{
     value = aws_subnet.public_subnet.*.id
 }
-output "public_sub"{
+output "private_sub"{
     value = aws_subnet.private_subnet.*.id
 }
-output "public_sub"{
+output "db_sub"{
     value = aws_subnet.private_db.*.id
 }

@@ -71,6 +71,10 @@ resource "aws_route_table_association" "public_association" {
 }
 
 
+resource "aws_eip" "elastic_ip" {
+  vpc = true
+}
+
 // NAT Gateway
 // It is used such that instances in private subnet can connect to services outside your VPC
 resource "aws_nat_gateway" "ngw" {
@@ -83,7 +87,7 @@ resource "aws_nat_gateway" "ngw" {
 resource "aws_subnet" "private_subnet" {
   count = var.num_subnet
   vpc_id = aws_vpc.mainvpc.id
-  cidr_block = "10.0.${30+count.index}.0.24"
+  cidr_block = "10.0.${30+count.index}.0/24"
   map_public_ip_on_launch = false
   availability_zone = data.aws_availability_zones.available.names[count.index]
 
@@ -146,7 +150,7 @@ resource "aws_security_group" "bastion" {
   }
 }
 
-resource "aws_securtiy_group" "loadbalancersg" {
+resource "aws_security_group" "loadbalancersg" {
   name = "lb_sg"
   description = "Inbound HTTP Traffic"
   vpc_id = aws_vpc.mainvpc.id
@@ -201,7 +205,7 @@ resource "aws_security_group" "backend" {
     from_port = 80
     to_port = 80
     protocol = "tcp"
-    cidr_blocks = [aws_security_group.frontend]
+    cidr_blocks = [aws_security_group.frontend.id]
   }
   ingress {
     from_port = 22
@@ -221,7 +225,7 @@ resource "aws_security_group" "backend" {
 resource "aws_security_group" "rds_sg" {
   name        = "rds_sg"
   description = "MYSQL PORT"
-  vpc_id      = aws_vpc.three_tier_vpc.id
+  vpc_id      = aws_vpc.mainvpc.id
 
   ingress {
     from_port       = 3306

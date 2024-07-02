@@ -30,3 +30,6 @@ Load Balancer
 Compute
     - Autoscaling group for EC2 Instances
     - Launch Templates
+
+
+If mutltiple teams are working together in this infratructure, there is chance of corruption of state files or the possibility of them not being in sync. So remote backend is configured to prevent conflicts.

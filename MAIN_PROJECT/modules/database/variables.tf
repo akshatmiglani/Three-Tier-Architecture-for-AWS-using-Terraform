@@ -1,0 +1,9 @@
+variable "db_storage" {}
+variable "db_name" {}
+variable "db_user" {}
+variable "dbpassword" {}
+variable "db_subnet_group_name" {}
+variable "db_instance_class" {}
+variable "db_engine_version" {}
+variable "rds_sg" {}
+variable "db_identifer" {}
