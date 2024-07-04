@@ -179,13 +179,13 @@ resource "aws_security_group" "frontend" {
     from_port = 80
     to_port = 80
     protocol = "tcp"
-    cidr_blocks = [aws_security_group.loadbalancersg.id]
+     security_groups = [aws_security_group.loadbalancersg.id]
   }
   ingress {
     from_port = 22
     to_port = 22
     protocol = "tcp"
-    cidr_blocks = [aws_security_group.bastion.id]
+     security_groups = [aws_security_group.bastion.id]
   }
   egress {
     from_port = 0

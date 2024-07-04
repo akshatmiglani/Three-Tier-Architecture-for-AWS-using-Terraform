@@ -1,35 +1,84 @@
-![3 Tier Architecutre Project](3TIERArchitecture.drawio.png)
+![3 Tier Architecutre Project](3TIERArchitecture.drawio1.png)
 
 
 This project is focussing on automating the creation of a three tier architecutre on AWS using the Infrastructure as a code tool "Terraform".
 
-A three tier architecture is basically a kind of system with three layers namely
+# Project Overview: Automating Three-Tier Architecture on AWS with Terraform
 
-1. Web Tier: This is the major front-end component. It will be part of an autoscaling group to provide scalbility and robust service. It will also consists of a bastion host which helps to connect to application tier instances in privat esubent. Nat gateway is created which helps in this.
+This project focuses on automating the deployment of a scalable three-tier architecture on AWS using Terraform, an Infrastructure as Code tool.
 
-2. Application Tier: Consists of the backend logic and apis required to provide function to web tier. Traffic is directed using an internt facing load balancer.
+## Three-Tier Architecture Components
 
-3. Database Tier: In this an AWS RDS MySQL instance is created.
+### 1. Web Tier
+- **Autoscaling Group**: Scales the front-end component for robustness.
+- **Bastion Host**: Facilitates secure access to application tier instances in a private subnet.
+- **NAT Gateway**: Enables outbound internet traffic from private subnets.
 
+### 2. Application Tier
+- **Backend Logic and APIs**: Provides functionality to the web tier.
+- **Internet-Facing Load Balancer**: Directs incoming traffic to application instances.
 
-Components of this infrastructure includes:
-Networking
-    - Virtual Private Network
-    - Subnets in 2AZs, Public, Private and for Database
-    - Internt Gateway
-    - NAT Gateway
-    - Route Table
-    - Security Groups
+### 3. Database Tier
+- **AWS RDS MySQL**: Managed relational database service for data storage.
 
-Database
-    - AWS RDS INSTANCE
+## Infrastructure Components
 
-Load Balancer
-    - Application Load Balancer
+### Networking
+- **Virtual Private Cloud (VPC)** with multiple subnets (public, private, database).
+- **Internet Gateway**: Provides internet access to the VPC.
+- **Route Tables** and **Security Groups**: Manage traffic routing and network security.
 
-Compute
-    - Autoscaling group for EC2 Instances
-    - Launch Templates
+### Database
+- **AWS RDS Instance**: MySQL database instance for persistent data storage.
 
+### Load Balancer
+- **Application Load Balancer**: Distributes incoming application traffic across multiple targets.
 
-If mutltiple teams are working together in this infratructure, there is chance of corruption of state files or the possibility of them not being in sync. So remote backend is configured to prevent conflicts.
+### Compute
+- **Autoscaling Group**: Scales EC2 instances based on traffic demands.
+- **Launch Templates**: Defines the configuration of EC2 instances.
+
+## Remote Backend Configuration
+
+To avoid state file conflicts when multiple teams are working, a remote backend is configured.
+
+## Steps to Deploy
+
+1. **Clone Repository**: `git clone https://github.com/akshatmiglani/Terraform-Learning.git`
+2. **Change Directory**: `cd <project-directory>`
+3. **Configure AWS CLI**:
+   - Create a new IAM User with necessary permissions.
+   - Configure AWS CLI with access key and secret access key:
+```bash
+     aws configure
+```
+4. **Create S3 Bucket for Remote Backend**:
+   - Enable versioning for the S3 bucket (mandatory).
+   - Update details in backend.tf file
+   
+5. **Modify tfvars File**:
+   - Configure Database username, password, and Amazon AMIs for launch template.
+
+6. **Initialize Terraform**:
+```bash
+    terraform init
+```
+
+7. **Apply Terraform Configuration**:
+```bash
+   terraform apply
+```
+8. **View Infrastructure on AWS**:
+    Check your AWS account dashboard to view the deployed infrastructure. View the S3 bucket to view the state file.
+
+9. **Access Application**:
+    Copy the DNS name provided by the Application Load Balancer into your browser to access the application.
+    
+10. **Destroy Infrastructure**:
+```bash
+    terraform destroy
+```
+    
+
+## Example Output
+
