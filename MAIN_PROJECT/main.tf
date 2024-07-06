@@ -31,12 +31,12 @@ module "ec2" {
 module "database" {
   source = "./modules/database"
   db_storage = 10
-  db_engine_version = "8.0"
-  db_instance_class = "db.t2.micro"
+  db_engine_version = "8.0.35"
+  db_instance_class = "db.t3.micro"
   db_name = var.db_name
   db_user = var.db_user
   dbpassword = var.db_password
-  db_identifer = "project-db"
+  db_identifer = "projectdb"
   rds_sg = module.vpc-subnet-setup.rds_sg
   db_subnet_group_name = module.vpc-subnet-setup.db_sg_name[0]
 }
