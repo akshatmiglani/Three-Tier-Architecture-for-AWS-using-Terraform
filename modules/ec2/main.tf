@@ -63,7 +63,7 @@ data "aws_lb_target_group" "tg" {
 
 resource "aws_autoscaling_group" "asg-frontend" {
   name = "asg-frontend"
-  vpc_zone_identifier = var.private_subnets
+  vpc_zone_identifier = var.public_subnets
   min_size = 2
   max_size = 3
   desired_capacity = 2

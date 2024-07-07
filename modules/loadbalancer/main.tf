@@ -9,6 +9,8 @@ resource "aws_lb" "main-alb" {
   name = "application-lb"
   security_groups = [var.lb_sg]
   subnets = var.public_subnets
+  internal = false
+  load_balancer_type = "application"
   idle_timeout = 400
   depends_on = [ 
     var.asg-frontend
