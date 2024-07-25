@@ -12,3 +12,6 @@ sudo systemctl start apache2
 
 # Verify Apache status
 sudo systemctl status apache2
+
+# Create a simple index.html file
+echo "Hello" | sudo tee /var/www/html/index.html

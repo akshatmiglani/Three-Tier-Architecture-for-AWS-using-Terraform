@@ -5,3 +5,7 @@ output "asg-frontend" {
 output "backend-asg" {
   value = aws_autoscaling_group.asg-backend
 }
+
+output "signed_url" {
+  value = trimspace(data.local_file.signed_url_file.content)
+}

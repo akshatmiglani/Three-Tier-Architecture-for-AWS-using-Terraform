@@ -2,17 +2,55 @@
 
 resource "tls_private_key" "key" {
   algorithm = "RSA"
-  rsa_bits = 4096
+  rsa_bits  = 4096
 }
 
 resource "aws_key_pair" "access_key" {
-  key_name = var.ssh_key
+  key_name   = var.ssh_key
   public_key = tls_private_key.key.public_key_openssh
 }
-resource "local_file" "foo" {
-  content  = tls_private_key.key.private_key_pem
-  filename = "${var.ssh_key}.pem"
+
+resource "local_file" "private_key" {
+  content        = tls_private_key.key.private_key_pem
+  filename       = "${var.ssh_key}.pem"
   file_permission = "0400"
+}
+
+resource "aws_s3_bucket" "private_key_bucket" {
+  bucket = "${var.ssh_key}-bucket"
+}
+
+resource "aws_s3_bucket_object" "private_key" {
+  bucket = aws_s3_bucket.private_key_bucket.bucket
+  key    = "${var.ssh_key}.pem"
+  source = local_file.private_key.filename
+  acl    = "private"
+}
+
+# Generate signed URL using external script
+resource "null_resource" "generate_signed_url" {
+  provisioner "local-exec" {
+    command = "./modules/ec2/generate_signed_url.sh project-key-bucket project-key.pem 86400 > modules/ec2/signed_url.json"
+    interpreter = ["bash", "-c" ]
+  }
+
+  triggers = {
+    always_run = "${timestamp()}"
+  }
+}
+
+data "local_file" "signed_url_file" {
+  depends_on = [null_resource.generate_signed_url]
+  filename = "./modules/ec2/signed_url.json"
+}
+resource "null_resource" "cleanup_signed_url" {
+  provisioner "local-exec" {
+    when    = destroy
+    command = "rm -f modules/ec2/signed_url.json"
+    interpreter = ["bash", "-c"]
+  }
+
+  depends_on = [null_resource.generate_signed_url]
 }
 
 // Launch Templates

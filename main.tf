@@ -21,8 +21,8 @@ module "ec2" {
   private_subnets = module.vpc-subnet-setup.private_sub
   bastion-count = 1
   instance_type = "t2.micro"
-  key_name = "PROJECT-KEY"
-  ssh_key = "PROJECT-KEY"
+  key_name = "project-key"
+  ssh_key = "project-key"
   tg_name =  module.loadbalancing.lb_tgname
   lb_tg = module.loadbalancing.lb_tg
   ami = var.ami

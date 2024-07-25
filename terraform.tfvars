@@ -1,6 +1,6 @@
 access_ip="10.0.0.0/16"
-db_name="akshatdb"
+db_name="projectdb"
 db_user = "root"
 db_password = "root1234"
-ssh_key = "PROJECT-KEY"
+ssh_key = "project-key"
 ami = "ami-0ad21ae1d0696ad58"
