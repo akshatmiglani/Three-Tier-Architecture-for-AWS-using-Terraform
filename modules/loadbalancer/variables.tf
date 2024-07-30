@@ -5,6 +5,13 @@ variable "public_subnets" {}
 variable "asg-frontend" {
   
 }
+variable "asg-backend" {
+  
+}
+
+variable "private_subnets" {
+     
+}
 variable "tg_port" {
   
 }

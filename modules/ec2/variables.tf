@@ -17,6 +17,9 @@ variable "key_name" {
 variable "lb_tg" {
   
 }
+variable "private_tg" {
+  
+}
 variable "tg_name" {
   
 }

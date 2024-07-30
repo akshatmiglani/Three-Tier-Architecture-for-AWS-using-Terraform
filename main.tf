@@ -25,6 +25,7 @@ module "ec2" {
   ssh_key = "project-key"
   tg_name =  module.loadbalancing.lb_tgname
   lb_tg = module.loadbalancing.lb_tg
+  private_tg = module.loadbalancing.private_tg
   ami = var.ami
 }
 
@@ -46,10 +47,12 @@ module "loadbalancing" {
   source = "./modules/loadbalancer"
   lb_sg = module.vpc-subnet-setup.lb_sg
   public_subnets = module.vpc-subnet-setup.public_sub
+  private_subnets = module.vpc-subnet-setup.private_sub
   tg_port = 80
   tg_protocol = "HTTP"
   vpc_id = module.vpc-subnet-setup.vpc_id
   asg-frontend = module.ec2.asg-frontend
+  asg-backend     = module.ec2.asg-backend
   listener_port = 80
   listener_protocol = "HTTP"
   availability_zones = 2

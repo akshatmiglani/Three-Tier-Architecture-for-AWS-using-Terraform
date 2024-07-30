@@ -87,7 +87,6 @@ resource "aws_launch_template" "frontend-ec2" {
   image_id = var.ami
   vpc_security_group_ids = [var.frontend_sg]
   key_name = var.key_name
-  // React App Front-end
   user_data = filebase64("frontend.sh")
 
   tags = {
@@ -151,4 +150,9 @@ resource "aws_autoscaling_group" "asg-backend" {
 resource "aws_autoscaling_attachment" "asg-attach" {
   autoscaling_group_name = aws_autoscaling_group.asg-frontend.id
   lb_target_group_arn = var.lb_tg
+}
+
+resource "aws_autoscaling_attachment" "backend_asg_attachment" {
+  autoscaling_group_name = aws_autoscaling_group.asg-backend.id
+  lb_target_group_arn = aws_lb_target_group.private_tg.arn
 }
