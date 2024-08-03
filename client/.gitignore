@@ -1,5 +1,3 @@
-.terraform/
-.env
 # Logs
 logs
 *.log

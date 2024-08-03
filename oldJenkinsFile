@@ -1,0 +1,68 @@
+pipeline {
+    agent any
+
+    parameters {
+        choice(name: 'action', choices: ['apply', 'destroy'], description: 'Select the Terraform action to perform')
+    }
+
+    environment {
+        AWS_REGION = 'ap-south-1'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'InfraFor3TierArchitecture', url: 'https://github.com/akshatmiglani/Three-Tier-Architecture-for-AWS-using-Terraform'
+            }
+        }
+        stage('Check AWS Credentials') {
+            steps {
+                withCredentials([aws(credentialsId: 'aws-creds')]) {
+                    sh 'aws sts get-caller-identity'
+                }
+            }
+        }
+        stage('Terraform init') {
+            steps {
+                sh 'terraform init -reconfigure'
+            }
+        }
+        stage('Plan') {
+            steps {
+                withCredentials([aws(credentialsId: 'aws-creds')]){
+                    sh 'terraform plan'
+                }
+            }
+        }
+        stage('Terraform Action') {
+            when {
+                expression { params.action == 'apply' || params.action == 'destroy' }
+            }
+            steps {
+                withCredentials([aws(credentialsId: 'aws-creds')]) {
+                    sh "terraform ${params.action} --auto-approve"
+                }
+            }
+        }
+        stage('Capture Terraform Output') {
+            steps {
+                withCredentials([aws(credentialsId: 'aws-creds')]) {
+                    script {
+                        def output = sh(script: 'terraform output -json', returnStdout: true).trim()
+                        writeFile file: 'terraform_output.json', text: output
+                    }
+                }
+            }
+        }
+        stage('Send Email') {
+            steps {
+                emailext(
+                    to: 'akshat.miglani6573@gmail.com',
+                    subject: "Terraform Output from Jenkins Pipeline",
+                    body: "Please find the attached Terraform output.",
+                    attachmentsPattern: 'terraform_output.json'
+                )
+            }
+        }
+    }
+}
