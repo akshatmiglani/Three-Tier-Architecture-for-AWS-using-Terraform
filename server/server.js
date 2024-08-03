@@ -7,15 +7,16 @@ const app = express();
 const dotenv = require('dotenv');
 const { Webhook } = require('svix');
 const cors=require('cors');
+const axios=require('axios')
 
 dotenv.config(); 
 
+const username = process.env.JENKINS_USERNAME; 
+const apiToken = process.env.JENKINS_TOKEN; 
+
+
 app.use(bodyParser.json());
-app.use(cors({
-  origin: 'http://localhost:5173',
-  methods: 'GET,POST,PUT,DELETE',
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+app.use(cors());
 
 console.log('CLERK_WEBHOOK_SECRET:', process.env.CLERK_WEBHOOK_SECRET);
 
@@ -107,24 +108,32 @@ app.put('/api/:email', async (req, res) => {
   }
 });
 
-// Endpoint to trigger Jenkins job
 app.post('/api/initialize/:email', async (req, res) => {
   try {
     const user = await User.findOne({ email: req.params.email });
     if (!user) return res.status(404).send('User not found');
 
-    // Trigger Jenkins job with user credentials
-    await axios.post('http://jenkins-url/job/initialize-architecture/buildWithParameters', null, {
-      params: {
-        email: user.email,
-        awsAccessKey: user.awsAccessKeyId,
-        awsSecretKey: user.awsSecretAccessKey,
+    const crumbResponse = await axios.get('http://localhost:8080/crumbIssuer/api/json', {
+      auth: {
+        username: username,
+        password: apiToken
+      }
+    });
+    const crumb = crumbResponse.data.crumb;
+
+    const decryptedSecretKey = user.decryptSecretKey();
+    
+    await axios.post(`http://localhost:8080/job/Automation%20of%203%20Tier%20Architecture/buildWithParameters?token=${process.env.APITOKEN}&action=apply&AWS_ACCESS_KEY_ID=${user.awsAccessKeyId}&AWS_SECRET_ACCESS_KEY=${decryptedSecretKey}&EMAIL=${user.email}`, {}, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Jenkins-Crumb': crumb
       },
       auth: {
-        username: 'jenkins-username',
-        password: 'jenkins-password',
-      },
+        username: username,
+        password: apiToken
+      }
     });
+    
 
     res.send('Jenkins job triggered');
   } catch (error) {
@@ -133,22 +142,68 @@ app.post('/api/initialize/:email', async (req, res) => {
   }
 });
 
-// Endpoint to fetch user configuration
-app.get('/api/config/:email', async (req, res) => {
+app.post('/api/destroy/:email', async (req, res) => {
   try {
     const user = await User.findOne({ email: req.params.email });
     if (!user) return res.status(404).send('User not found');
 
-    res.send({
-      frontEndLoadBalancer: user.frontEndLoadBalancer,
-      backEndLoadBalancer: user.backEndLoadBalancer,
-      databaseEndpoint: user.databaseEndpoint,
-      signedUrlForPemFile: user.signedUrlForPemFile,
+    const crumbResponse = await axios.get('http://localhost:8080/crumbIssuer/api/json', {
+      auth: {
+        username: username,
+        password: apiToken
+      }
     });
+    const crumb = crumbResponse.data.crumb;
+
+    
+    await axios.post(`http://localhost:8080//job/Automation%20of%203%20Tier%20Architecture/buildWithParameters?token=${process.env.APITOKEN}&action=destroy&AWS_ACCESS_KEY_ID=${user.awsAccessKeyId}&AWS_SECRET_ACCESS_KEY=${user.awsSecretAccessKey}&EMAIL=${user.email}`,{}, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Jenkins-Crumb': crumb
+      },
+      auth: {
+        username: username,
+        password: apiToken
+      }
+    });
+
+    await User.updateOne(
+      { email: req.params.email },
+      {
+        $unset: {
+          frontEndLoadBalancer: "",
+          backEndLoadBalancer: "",
+          databaseEndpoint: "",
+          signedUrlForPemFile: "",
+          isActive: false
+        }
+      }
+    );
+
+    res.send('Jenkins job triggered');
   } catch (error) {
+    console.error('Error triggering Jenkins job:', error);
     res.status(500).send('Server error');
   }
 });
+
+app.get('/api/checkActiveConfig/:email', async (req, res) => {
+ 
+
+
+  try {
+    const user = await User.findOne({ email: req.params.email });
+    if (!user) return res.status(404).send('User not found');
+
+    const activeConfig = user.isActive
+
+    res.json({ isActive: !!activeConfig });
+  } catch (error) {
+    console.error('Error checking active configuration:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 mongoose.connect('mongodb://localhost:27017/jenkins-db', { useNewUrlParser: true, useUnifiedTopology: true });
 
 app.listen(3000, () => console.log('Server running on port 3000'));

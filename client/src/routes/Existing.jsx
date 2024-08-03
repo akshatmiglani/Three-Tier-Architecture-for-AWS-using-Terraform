@@ -4,8 +4,10 @@ import axios from 'axios';
 const Existing = ({ credentials }) => {
   const handleDestroy = async () => {
     try {
-      await axios.post(`http://localhost:3000/api/destroy/${credentials.email}`);
+      await axios.post(`http://localhost:3000/api/destroy/${user.primaryEmailAddress.emailAddress}`);
+      alert('Configuration is getting destroyed!')
     } catch (error) {
+      alert('Unable to desstroy')
       console.error('Error destroying architecture:', error);
     }
   };

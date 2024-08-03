@@ -102,12 +102,16 @@ pipeline {
 
                     try {
                         await client.connect();
-                        const database = client.db('myDatabase');
+                        const database = client.db('jenkins-db');
                         const collection = database.collection('users');
 
                         const fileContent = fs.readFileSync('terraform_output.json', 'utf8');
                         const terraformOutput = JSON.parse(fileContent);
-
+                        const activeConfig = await collection.findOne({ email: email, isActive: true })
+                        if (activeConfig) {
+                            console.log('An active configuration already exists for this user.');
+                            process.exit(1);
+                        }
                         const result = await collection.updateOne(
                             { email: email },
                             { 
@@ -116,6 +120,7 @@ pipeline {
                                     backendLoadBalancer: terraformOutput.backendLoadBalancer || 'N/A',
                                     databaseEndpoint: terraformOutput.databaseEndpoint || 'N/A',
                                     signedUrlForPemFile: terraformOutput.signedUrlForPemFile || 'N/A'
+                                    isActive: true
                                 } 
                             },
                             { upsert: true }
