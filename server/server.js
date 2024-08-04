@@ -1,13 +1,13 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-const crypto = require('crypto');
 const User = require('./models/User');
 const app = express();
 const dotenv = require('dotenv');
 const { Webhook } = require('svix');
 const cors=require('cors');
 const axios=require('axios')
+const { encrypt } = require('./encryptionUtils');
 
 dotenv.config(); 
 
@@ -98,7 +98,13 @@ app.put('/api/:email', async (req, res) => {
     }
 
     user.awsAccessKeyId = awsAccessKey;
-    user.awsSecretAccessKey = awsSecretKey;
+    const encryptedSecret = encrypt(awsSecretKey);
+    user.awsSecretAccessKey = {
+      iv: encryptedSecret.iv,
+      encryptedData: encryptedSecret.encryptedData
+    };
+
+    console.log(user.awsSecretAccessKey);
     await user.save();
 
     res.send('Credentials updated');
@@ -107,7 +113,6 @@ app.put('/api/:email', async (req, res) => {
     res.status(500).send('Server error');
   }
 });
-
 app.post('/api/initialize/:email', async (req, res) => {
   try {
     const user = await User.findOne({ email: req.params.email });
@@ -155,8 +160,9 @@ app.post('/api/destroy/:email', async (req, res) => {
     });
     const crumb = crumbResponse.data.crumb;
 
+    const decryptedSecretKey = user.decryptSecretKey();
     
-    await axios.post(`http://localhost:8080//job/Automation%20of%203%20Tier%20Architecture/buildWithParameters?token=${process.env.APITOKEN}&action=destroy&AWS_ACCESS_KEY_ID=${user.awsAccessKeyId}&AWS_SECRET_ACCESS_KEY=${user.awsSecretAccessKey}&EMAIL=${user.email}`,{}, {
+    await axios.post(`http://localhost:8080//job/Automation%20of%203%20Tier%20Architecture/buildWithParameters?token=${process.env.APITOKEN}&action=destroy&AWS_ACCESS_KEY_ID=${user.awsAccessKeyId}&AWS_SECRET_ACCESS_KEY=${decryptedSecretKey}&EMAIL=${user.email}`,{}, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Jenkins-Crumb': crumb

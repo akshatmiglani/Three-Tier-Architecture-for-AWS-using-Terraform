@@ -1,9 +1,13 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const { decrypt } = require('../encryptionUtils');
+
 const userSchema = new mongoose.Schema({
   email: { type: String, unique: true },
   awsAccessKeyId: String,
-  awsSecretAccessKey: String,
+  awsSecretAccessKey: {
+    iv: { type: String },
+    encryptedData: { type: String },
+  },
   isActive: { type: Boolean, default: false },
   frontendLoadBalancer: String,
   backendLoadBalancer: String,
@@ -11,16 +15,12 @@ const userSchema = new mongoose.Schema({
   signedUrlForPemFile: String,
 }, { timestamps: true });
 
-userSchema.pre('save', async function (next) {
-  if (this.isModified('awsSecretAccessKey')) {
-    const salt = await bcrypt.genSalt(10);
-    this.awsSecretAccessKey = await bcrypt.hash(this.awsSecretAccessKey, salt);
-  }
-  next();
-});
-
-userSchema.methods.compareSecretKey = async function (key) {
-  return await bcrypt.compare(key, this.awsSecretAccessKey);
+userSchema.methods.decryptSecretKey = function () {
+  console.log("Decrypting");
+  const { iv, encryptedData } = this.awsSecretAccessKey;
+  return decrypt(encryptedData, iv);
 };
 
-module.exports = mongoose.model('User', userSchema);
+const User = mongoose.model('User', userSchema);
+
+module.exports = User;

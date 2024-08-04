@@ -22,6 +22,7 @@ const Settings = ({ credentials }) => {
         awsSecretKey,
       });
       setIsEditing(false);
+      setAwsSecretKey('storedSecretKey');
     } catch (error) {
       console.error('Error saving credentials', error);
     }
