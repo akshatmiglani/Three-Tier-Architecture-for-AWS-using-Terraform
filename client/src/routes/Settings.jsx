@@ -102,6 +102,7 @@ const Settings = ({ credentials }) => {
       <li className="w-full px-4 py-2 border-b border-gray-200">AmazonRDSFullAccess</li>
       <li className="w-full px-4 py-2 border-b border-gray-200">AmazonVPCFullAccess</li>
       <li className="w-full px-4 py-2 rounded-b-lg">ElasticLoadBalancingFullAccess</li>
+      <li className="w-full px-4 py-2 rounded-b-lg">S3FullAccess</li>
     </ul>
           </div>
 

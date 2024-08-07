@@ -151,8 +151,8 @@ resource "aws_autoscaling_attachment" "asg-attach" {
   autoscaling_group_name = aws_autoscaling_group.asg-frontend.id
   lb_target_group_arn = var.lb_tg
 }
-
+//autoscaling for backend to loadbalncer
 resource "aws_autoscaling_attachment" "backend_asg_attachment" {
   autoscaling_group_name = aws_autoscaling_group.asg-backend.id
-  lb_target_group_arn = aws_lb_target_group.private_tg.arn
+  lb_target_group_arn = var.private_tg
 }
