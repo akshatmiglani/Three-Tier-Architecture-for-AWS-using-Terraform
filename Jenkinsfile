@@ -12,12 +12,16 @@ pipeline {
         AWS_REGION = 'ap-south-1'
         AWS_ACCESS_KEY_ID = "${params.AWS_ACCESS_KEY_ID}"
         AWS_SECRET_ACCESS_KEY = "${params.AWS_SECRET_ACCESS_KEY}"
+        S3_BUCKET = "automationapp-terraform"
+        API_URL=credentials('api-endpoint')
     }
 
     stages {
         stage('Checkout') {
             steps {
                 git branch: 'InfraFor3TierArchitecture', url: 'https://github.com/akshatmiglani/Three-Tier-Architecture-for-AWS-using-Terraform'
+                sh 'chmod +x modules/ec2/generate_signed_url.sh'
+                
             }
         }
         stage('Check AWS Credentials') {
@@ -27,9 +31,28 @@ pipeline {
                 }
             }
         }
+        stage('Check/Create S3 Bucket') {
+            steps {
+                script {
+                    def bucketExists = sh(script: "aws s3api head-bucket --bucket ${S3_BUCKET} 2>/dev/null", returnStatus: true) == 0
+                    if (!bucketExists) {
+                        sh "aws s3api create-bucket --bucket ${S3_BUCKET} --region ${AWS_REGION} --create-bucket-configuration LocationConstraint=${AWS_REGION}"
+                    }
+                }
+            }
+        }
         stage('Terraform init') {
             steps {
                 withEnv(["AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}", "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}"]) {
+                    writeFile file: 'backend.tf', text: """
+                    terraform {
+                      backend "s3" {
+                        bucket = "${S3_BUCKET}"
+                        key    = "terraform/state"
+                        region = "${AWS_REGION}"
+                      }
+                    }
+                    """
                     sh 'terraform init -reconfigure'
                 }
             }
@@ -89,54 +112,49 @@ pipeline {
         }
     }
     post {
-        always {
+        success {
             script {
                 def email = "${params.EMAIL}"
-                def mongoScript = """
-                const { MongoClient } = require('mongodb');
-                const fs = require('fs');
-
-                async function main() {
-                    const uri = 'mongodb://localhost:27017';
-                    const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-
-                    try {
-                        await client.connect();
-                        const database = client.db('jenkins-db');
-                        const collection = database.collection('users');
-
-                        const fileContent = fs.readFileSync('terraform_output.json', 'utf8');
-                        const terraformOutput = JSON.parse(fileContent);
-                        const activeConfig = await collection.findOne({ email: email, isActive: true })
-                        if (activeConfig) {
-                            console.log('An active configuration already exists for this user.');
-                            process.exit(1);
-                        }
-                        const result = await collection.updateOne(
-                            { email: email },
-                            { 
-                                $set: {
-                                    frontendLoadBalancer: terraformOutput.frontendLoadBalancer || 'N/A',
-                                    backendLoadBalancer: terraformOutput.backendLoadBalancer || 'N/A',
-                                    databaseEndpoint: terraformOutput.databaseEndpoint || 'N/A',
-                                    signedUrlForPemFile: terraformOutput.signedUrlForPemFile || 'N/A'
-                                    isActive: true
-                                } 
-                            },
-                            { upsert: true }
-                        );
-
-                        console.log(`Matched ${result.matchedCount} document(s) and modified ${result.modifiedCount} document(s)`);
-                    } finally {
-                        await client.close();
+                def payload
+    
+                if (params.action == "destroy") {
+                    payload = """
+                    {
+                        "email": "${email}",
+                        "action": "destroy"
                     }
+                    """
+                } else {
+                    def filePath = 'terraform_output.json'
+                    if (!fileExists(filePath)) {
+                        error 'File terraform_output.json does not exist.'
+                    }
+    
+                    def terraformOutput = readFile(filePath).trim()
+    
+                    payload = """
+                    {
+                        "email": "${email}",
+                        "action": "active",
+                        "terraformOutput": ${terraformOutput}
+                    }
+                    """
                 }
+    
+                // Use the payload directly with curl, escaping the payload properly
+                def response = sh(script: """curl -v -s -X POST ${API_URL}/updateConfig -H "Content-Type: application/json" -d '${payload}'""", returnStdout: true)
 
-                main().catch(console.error);
-                """
-                writeFile file: 'storeMongoDB.js', text: mongoScript
-                sh 'node storeMongoDB.js'
+                // Output response from API
+                echo "Response from API: ${response}"
             }
         }
+    
+        failure {
+            echo 'Build failed. Skipping database update.'
+        }
+        unstable {
+            echo 'Build is unstable. Skipping database update.'
+        }
     }
+
 }

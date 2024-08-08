@@ -20,7 +20,7 @@ resource "aws_s3_bucket" "private_key_bucket" {
   bucket = "${var.ssh_key}-bucket"
 }
 
-resource "aws_s3_bucket_object" "private_key" {
+resource "aws_s3_object" "private_key" {
   bucket = aws_s3_bucket.private_key_bucket.bucket
   key    = "${var.ssh_key}.pem"
   source = local_file.private_key.filename

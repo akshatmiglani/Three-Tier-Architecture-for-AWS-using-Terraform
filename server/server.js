@@ -125,9 +125,9 @@ app.post('/api/initialize/:email', async (req, res) => {
       }
     });
     const crumb = crumbResponse.data.crumb;
-
+    console.log(user.awsAccessKeyId)
     const decryptedSecretKey = user.decryptSecretKey();
-    
+    console.log('AWS Secret Key:', decryptedSecretKey);
     await axios.post(`http://localhost:8080/job/Automation%20of%203%20Tier%20Architecture/buildWithParameters?token=${process.env.APITOKEN}&action=apply&AWS_ACCESS_KEY_ID=${user.awsAccessKeyId}&AWS_SECRET_ACCESS_KEY=${decryptedSecretKey}&EMAIL=${user.email}`, {}, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -140,7 +140,7 @@ app.post('/api/initialize/:email', async (req, res) => {
     });
     
 
-    res.send('Jenkins job triggered');
+    res.send('Jenkins Initilaization Job triggered');
   } catch (error) {
     console.error('Error triggering Jenkins job:', error);
     res.status(500).send('Server error');
@@ -162,7 +162,7 @@ app.post('/api/destroy/:email', async (req, res) => {
 
     const decryptedSecretKey = user.decryptSecretKey();
     
-    await axios.post(`http://localhost:8080//job/Automation%20of%203%20Tier%20Architecture/buildWithParameters?token=${process.env.APITOKEN}&action=destroy&AWS_ACCESS_KEY_ID=${user.awsAccessKeyId}&AWS_SECRET_ACCESS_KEY=${decryptedSecretKey}&EMAIL=${user.email}`,{}, {
+    await axios.post(`http://localhost:8080/job/Automation%20of%203%20Tier%20Architecture/buildWithParameters?token=${process.env.APITOKEN}&action=destroy&AWS_ACCESS_KEY_ID=${user.awsAccessKeyId}&AWS_SECRET_ACCESS_KEY=${decryptedSecretKey}&EMAIL=${user.email}`, {}, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Jenkins-Crumb': crumb
@@ -172,21 +172,9 @@ app.post('/api/destroy/:email', async (req, res) => {
         password: apiToken
       }
     });
+    
+    res.send('Jenkins Initilaization Job triggered');
 
-    await User.updateOne(
-      { email: req.params.email },
-      {
-        $unset: {
-          frontEndLoadBalancer: "",
-          backEndLoadBalancer: "",
-          databaseEndpoint: "",
-          signedUrlForPemFile: "",
-          isActive: false
-        }
-      }
-    );
-
-    res.send('Jenkins job triggered');
   } catch (error) {
     console.error('Error triggering Jenkins job:', error);
     res.status(500).send('Server error');
@@ -195,8 +183,6 @@ app.post('/api/destroy/:email', async (req, res) => {
 
 app.get('/api/checkActiveConfig/:email', async (req, res) => {
  
-
-
   try {
     const user = await User.findOne({ email: req.params.email });
     if (!user) return res.status(404).send('User not found');
@@ -210,6 +196,52 @@ app.get('/api/checkActiveConfig/:email', async (req, res) => {
   }
 });
 
+app.post('/updateConfig', async (req, res) => {
+  const { email, action, terraformOutput } = req.body;
+  console.log("Update called")
+  if (!email) {
+      return res.status(400).json({ error: 'Email and terraform output are required.' });
+  }
+
+  try {
+      // Update or insert the configuration based on the action
+      let updateFields = {};
+      if (action === 'active') {
+          const frontendLoadBalancer = terraformOutput['loadbalancer-endpoint']?.value || 'N/A';
+          const backendLoadBalancer = terraformOutput['backend-endpoint']?.value || 'N/A';
+          const databaseEndpoint = terraformOutput['database-endpoint']?.value || 'N/A';
+          const signedUrlForPemFile = JSON.parse(terraformOutput['signed_url']?.value)?.signed_url || 'N/A';
+          updateFields = {
+              frontendLoadBalancer,
+              backendLoadBalancer,
+              databaseEndpoint,
+              signedUrlForPemFile,
+              isActive: true
+          };
+      } else if (action === 'destroy') {
+          updateFields = {
+              frontendLoadBalancer: '',
+              backendLoadBalancer: '',
+              databaseEndpoint: '',
+              signedUrlForPemFile: '',
+              isActive: false
+          };
+      }
+
+      const result = await User.updateOne(
+          { email },
+          { $set: updateFields },
+          { upsert: true }
+      );
+
+      res.status(200).json({
+          message: `Matched ${result.matchedCount} document(s) and modified ${result.modifiedCount} document(s)`
+      });
+  } catch (error) {
+      console.error('Error:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+  } 
+});
 mongoose.connect('mongodb://localhost:27017/jenkins-db', { useNewUrlParser: true, useUnifiedTopology: true });
 
-app.listen(3000, () => console.log('Server running on port 3000'));
+app.listen(3000, '0.0.0.0', () => console.log('Server running on port 3000'));

@@ -7,6 +7,7 @@ const Settings = ({ credentials }) => {
   const [awsAccessKey, setAwsAccessKey] = useState(credentials.accessKey);
   const [awsSecretKey, setAwsSecretKey] = useState(credentials.secretKey);
   const [isEditing, setIsEditing] = useState(false);
+  const [isActive,setActive]=useState(credentials.isActive);
 
   useEffect(() => {
     setAwsAccessKey(credentials.awsAccessKeyId);
@@ -105,7 +106,7 @@ const Settings = ({ credentials }) => {
       <li className="w-full px-4 py-2 rounded-b-lg">S3FullAccess</li>
     </ul>
           </div>
-
+          {!isActive && (
           <div className="flex items-center justify-between">
             <div>
               {!isEditing && (
@@ -127,6 +128,7 @@ const Settings = ({ credentials }) => {
               </button>
             )}
           </div>
+        )}
         </form>
       </div>
     </article>
