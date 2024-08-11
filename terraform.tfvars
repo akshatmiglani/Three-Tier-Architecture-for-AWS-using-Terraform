@@ -1,4 +1,4 @@
-access_ip="0.0.0.0"
+access_ip="0.0.0.0/0"
 db_name="projectdb"
 db_user = "root"
 db_password = "root1234"
