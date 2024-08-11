@@ -42,7 +42,50 @@ This project focuses on automating the deployment of a scalable three-tier archi
 
 To avoid state file conflicts when multiple teams are working, a remote backend is configured.
 
-## Steps to Deploy
+## Interface
+I have created a MERN stack application to have an interface for managing the infrastructure.
+Components used for the front-end
+1. React
+2. Clerk (for Authentication)
+
+Components used for the backend
+1. Node & Express
+2. MongoDB
+3. NGROK for endpoint
+
+# Starting the Application
+1.Create a .env.local file in <mark>client</mark> folder with the following:
+```bash
+VITE_CLERK_PUBLISHABLE_KEY= your-clerk-key
+```
+   Start the application
+   ```bash
+   cd client
+   npm i
+   npm run dev
+   ```
+2. Create another env file for backebd
+```bash
+CLERK_WEBHOOK_SECRET=
+JENKINS_USERNAME=
+JENKINS_TOKEN=
+APITOKEN=
+ENCRYPTION_KEY=32byterandomencryptionkey
+ALGO=aes-256-cbc
+```
+
+Start the application
+
+```bash
+cd server
+npm i
+nodemon server.js
+```
+3. Create an endpoint using ngrok, and start it at port 3000
+Example: ngrok http --domain=yourapp.ngrok-free.app 3000
+
+ngrok is used to provide an endpoint for API so that user details can be stored in database directly from clerk. The other use is that it is used to call APIs from jenkins.
+## Steps to use the terraform modules
 
 1. **Clone Repository**: `git clone https://github.com/akshatmiglani/Terraform-Learning.git`
 2. **Change Directory**: `cd <project-directory>`
@@ -85,3 +128,4 @@ To avoid state file conflicts when multiple teams are working, a remote backend 
 ![Database Endpoint Storage](SampleOutput.png)
 
 ![Frontend Endpoint Display](SampleOutput2.png)
+
