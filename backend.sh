@@ -25,7 +25,6 @@ npm init -y
 
 # Install Express
 npm install express
-
 # Create a server.js file
 cat <<EOL > server.js
 const express = require('express');
