@@ -81,4 +81,7 @@ To avoid state file conflicts when multiple teams are working, a remote backend 
     
 
 ## Example Output
-![Sample Output](image.png) 
+
+![Database Endpoint Storage](SampleOutput.png)
+
+![Frontend Endpoint Display](SampleOutput2.png)
