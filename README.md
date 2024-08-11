@@ -85,7 +85,27 @@ nodemon server.js
 Example: ngrok http --domain=yourapp.ngrok-free.app 3000
 
 ngrok is used to provide an endpoint for API so that user details can be stored in database directly from clerk. The other use is that it is used to call APIs from jenkins.
-## Steps to use the terraform modules
+
+## Using the architecture
+You need to use the below commands to access the infrastrcture
+```bash
+# Download the key from Signed URL link provided.
+# To set permissions.
+chmod 400 "project-key.pem"
+
+# Copying the key to the bastion host, find the IP of the bastion host from the aws console.
+scp -i project-key.pem project-key.pem ubuntu@ec2-3-110-46-22.ap-south-1.compute.amazonaws.com:/home/ubuntu/
+
+# Connect to the bastion host
+ssh -i "project-key.pem" ubuntu@ec2-3-110-46-22.ap-south-1.compute.amazonaws.com
+
+#Connect to instances in private subnet, again find the private IP from the AWS Console.
+ssh -i "project-key.pem" ubuntu@10.0.30.210
+
+# Command to connect to mysql instance
+mysql -h  projectdb.cr2mgycg0xoo.ap-south-1.rds.amazonaws.com:3306 -P 3306 -u root -p
+```
+## Steps to use the terraform modules separetly
 
 1. **Clone Repository**: `git clone https://github.com/akshatmiglani/Terraform-Learning.git`
 2. **Change Directory**: `cd <project-directory>`
@@ -116,7 +136,6 @@ ngrok is used to provide an endpoint for API so that user details can be stored 
 
 9. **Access Application**:
     Copy the DNS name provided by the Application Load Balancer into your browser to access the application.
-    
 10. **Destroy Infrastructure**:
 ```bash
     terraform destroy
