@@ -35,7 +35,7 @@ const Existing = ({ credentials }) => {
       <div className="flex items-start sm:gap-8">
         <div className="flex-grow">
         <div className="mx-auto max-w-lg text-center">
-            <h1 className="text-2xl font-bold sm:text-3xl">Exisitng Configuration</h1>
+            <h1 className="text-2xl font-bold sm:text-3xl">Existing Configuration</h1>
 
             <p className="mt-4 text-gray-500">
               Below are your details for the 3-Tier Configuration! 
