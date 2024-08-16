@@ -1,3 +1,7 @@
+# Understand the project via this video
+https://www.youtube.com/watch?v=GdyhT7FC-QA
+
+##
 ![3 Tier Architecutre Project](3TIERArchitecture.drawio1.png)
 
 
